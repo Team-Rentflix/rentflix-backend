@@ -1,18 +1,16 @@
 const Post = require("../models/post.model");
 const User = require("../models/user.model");
-const jwt = require('jsonwebtoken')
+const transactionHlp = require('../helper/transactionHlp')
 require("dotenv").config({ path: "./config.env" });
 
 
 exports.createPost = async (req, res) => {
-    const enc_pass = jwt.sign({acc_pass: req.body.acc_pass}, req.body.secret_key)
-    const enc_key = jwt.sign({secret_key: req.body.secret_key},process.env.SECRET)
+    const enc_pass = transactionHlp.encrypt(req.body.acc_pass)
     let post = new Post({
         ...req.body,
         user_id: res.locals.user._id,
         active: true,
         acc_pass: enc_pass,
-        secret_key: enc_key
     });
     try {
         await post.save();

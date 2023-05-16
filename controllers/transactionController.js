@@ -1,6 +1,7 @@
 const Transaction = require('../models/transaction.model')
-const jwt = require('jsonwebtoken')
 const Post = require('../models/post.model')
+const postHlp = require('../helper/transactionHlp');
+const transactionHlp = require('../helper/transactionHlp');
 
 require("dotenv").config({ path: "./config.env" });
 
@@ -19,18 +20,11 @@ exports.decryptPassword = async (req, res) => {
     try {
         const post = await Post.findById(req.query.post_id)
         if (!post) throw "No Post Found"
-        console.log(post)
-        if (jwt.verify(post.secret_key, process.env.SECRET)) {
-            const {secret_key} = jwt.decode(post.secret_key)
-            if(jwt.verify(post.acc_pass,secret_key)){
-                const {acc_pass} = jwt.decode(post.acc_pass)
-                res.send({status:true, password: acc_pass,acc_id: post.acc_id})
-            }else{
-                throw "Secret Key Invalid"
-            }
-        }else{
-            throw "Some Error Occured"
+        const acc_pass = transactionHlp.decrypt(post.acc_pass)
+        if (acc_pass) {
+            return res.status(200).send({ status: true, password: acc_pass, acc_id: post.acc_id })
         }
+        return res.status(400).send({ status: false, error: "something went wrong" })
     } catch (err) {
         res.status(500).send({ status: false, error: err })
     }
